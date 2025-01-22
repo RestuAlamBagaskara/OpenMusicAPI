@@ -1,0 +1,29 @@
+{
+  "name": "musicapi",
+  "version": "1.0.0",
+  "description": "Dicoding #1 Submission Belajar Fundamental BackeEnd dengan JS",
+  "main": "index.js",
+  "scripts": {
+    "prod": "NODE_ENV=production node ./src/server.js",
+    "dev": "nodemon ./src/server.js",
+    "lint": "eslint ./",
+    "migrate": "node-pg-migrate"
+  },
+  "author": "Restu Alam Bagaskara",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^8.57.1",
+    "eslint": "^9.18.0",
+    "eslint-config-google": "^0.14.0",
+    "globals": "^15.0.0",
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "@hapi/hapi": "^21.3.12",
+    "dotenv": "^16.4.7",
+    "joi": "^17.13.3",
+    "nanoid": "^5.0.9",
+    "node-pg-migrate": "^7.9.0",
+    "pg": "^8.13.1"
+  }
+}
