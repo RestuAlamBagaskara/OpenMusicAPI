@@ -4,7 +4,7 @@
   "description": "Dicoding #1 Submission Belajar Fundamental BackeEnd dengan JS",
   "main": "index.js",
   "scripts": {
-    "prod": "NODE_ENV=production node ./src/server.js",
+    "start": "node ./src/server.js",
     "dev": "nodemon ./src/server.js",
     "lint": "eslint ./",
     "migrate": "node-pg-migrate"
