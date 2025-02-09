@@ -1,0 +1,27 @@
+{
+  "name": "openmusicqueueconsumer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/consumer.js",
+    "dev": "nodemon ./src/consumer.js",
+    "lint": "eslint ./"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^8.57.1",
+    "eslint": "^9.18.0",
+    "eslint-config-google": "^0.14.0",
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.5",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.10.0",
+    "pg": "^8.13.1"
+  }
+}
