@@ -5,8 +5,10 @@ const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class AlbumService {
-  constructor() {
+  constructor(storageService, cacheService) {
     this._pool = new Pool();
+    this._storageService = storageService;
+    this._cacheService = cacheService;
   }
 
   async addAlbum({ name, year }) {
@@ -25,12 +27,21 @@ class AlbumService {
       throw new InvariantError('Album gagal ditambahkan');
     }
 
+    await this._cacheService.delete('albums');
     return result.rows[0].id;
   }
 
   async getAlbums() {
-    const result = await this._pool.query('SELECT * FROM albums');
-    return result.rows.map(mapAlbumToModel);
+    try {
+      const result = await this._cacheService.get('albums');
+      return JSON.parse(result);
+    }
+    catch {
+      const result = await this._pool.query('SELECT * FROM albums');
+      const mappedResult = result.rows.map(mapAlbumToModel);
+      await this._cacheService.set('albums', JSON.stringify(mappedResult));
+      return mappedResult;
+    }
   }
 
   async getAlbumById(id) {
@@ -66,6 +77,7 @@ class AlbumService {
     if (!result.rows.length) {
       throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
     }
+    await this._cacheService.delete('albums');
   }
 
   async deleteAlbumById(id) {
@@ -79,6 +91,98 @@ class AlbumService {
     if (!result.rows.length) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
     }
+    await this._cacheService.delete('albums');
+  }
+
+  async updateCoverAlbum({ id, cover }) {
+    const coverUrl = await this._storageService.writeFile(
+        cover,
+        cover.hapi
+    );
+    
+    const updatedAt = new Date().toISOString();
+    const query = {
+        text: 'UPDATE albums SET "coverUrl" = $1, updated_at = $2 WHERE id = $3 RETURNING id',
+        values: [coverUrl, updatedAt, id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+        throw new NotFoundError(
+            'Gagal memperbarui album. Id tidak ditemukan'
+        );
+    }
+    await this._cacheService.delete('albums');
+  }
+
+  async getAlbumLikesByAlbumId(id) {
+      try {
+          const albumLikesCount = await this._cacheService.get(`album_likes:${id}`);
+
+          return {
+              source: 'cache',
+              data: JSON.parse(albumLikesCount),
+          };
+      } catch {
+          const query = {
+              text: 'SELECT * FROM user_album_likes WHERE album_id = $1',
+              values: [id],
+          };
+          const albumLikesCount = await this._pool.query(query);
+
+          await this._cacheService.set(`album_likes:${id}`, albumLikesCount.rowCount);
+
+          return {
+              source: 'db',
+              data: albumLikesCount.rowCount,
+          };
+      }
+  }
+
+  async addAlbumLikes(albumId, userId) {
+      const id = `likes-${nanoid(16)}`;
+
+      const queryCheck = {
+          text: 'SELECT * FROM user_album_likes WHERE user_id = $1 AND album_id = $2',
+          values: [userId, albumId],
+      };
+      const existLike = await this._pool.query(queryCheck);
+      if (existLike.rowCount) {
+          throw new InvariantError(
+              'Likes gagal ditambahkan. Anda sudah menyukai album ini.'
+          );
+      }
+
+      const query = {
+          text: 'INSERT INTO user_album_likes VALUES($1, $2, $3) RETURNING id',
+          values: [id, userId, albumId],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+          throw new InvariantError('Likes gagal ditambahkan');
+      }
+
+      await this._cacheService.delete(`album_likes:${albumId}`);
+
+      return result.rows[0].id;
+  }
+
+  async deleteAlbumLikes(userId, albumId) {
+      const query = {
+          text: 'DELETE FROM user_album_likes WHERE user_id = $1 AND album_id = $2 RETURNING id',
+          values: [userId, albumId],
+      };
+
+      const result = await this._pool.query(query);
+
+      if (!result.rowCount) {
+          throw new InvariantError('Likes gagal dihapus');
+      }
+
+      await this._cacheService.delete(`album_likes:${albumId}`);
   }
 }
 

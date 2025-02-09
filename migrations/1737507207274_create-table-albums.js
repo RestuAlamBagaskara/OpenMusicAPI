@@ -25,6 +25,10 @@ exports.up = (pgm) => {
       type: 'TEXT',
       notNull: true,
     },
+    coverUrl: {
+      type: 'TEXT',
+      notNull: false,
+    },
   });
 };
 
