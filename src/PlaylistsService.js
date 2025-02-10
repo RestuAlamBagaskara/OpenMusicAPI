@@ -15,9 +15,8 @@ class PlaylistsService {
       const resultSongs = await this._pool.query(querySongs);
   
       const queryPlaylist = {
-        text: `SELECT p.id, p.name, u.username FROM playlists p
-              JOIN users u ON p.owner = u.id
-              WHERE p.id = $1`, 
+        text: `SELECT id, name FROM playlists
+              WHERE id = $1`, 
         values: [playlistId]
       };
       const resultPlaylist = await this._pool.query(queryPlaylist);
@@ -26,8 +25,10 @@ class PlaylistsService {
       }
       
       return {
-        ...resultPlaylist.rows[0],
-        songs: resultSongs.rows,
+        playlist: {
+          ...resultPlaylist.rows[0],
+          songs: resultSongs.rows,
+        },
       };
   }
 
